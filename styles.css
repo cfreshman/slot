@@ -1,0 +1,105 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Google Sans Code", monospace;
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.status {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.3;
+}
+
+.status.connected {
+  color: #000;
+}
+
+.status.disconnected {
+  color: #d00;
+  opacity: 1;
+}
+
+.empty-state {
+  width: 100%;
+  max-width: 400px;
+}
+
+.upload-area {
+  border: 1px solid #ddd;
+  padding: 4rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.upload-area:hover {
+  border-color: #000;
+  color: #000;
+}
+
+.upload-area.dragover {
+  border-color: #000;
+  color: #000;
+}
+
+.file-state {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.file-name {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+}
+
+.file-meta {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 1.5rem;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-family: "Google Sans Code", monospace;
+  background: #fff;
+  color: #000;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #000;
+}
+
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+

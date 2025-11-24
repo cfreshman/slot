@@ -1,0 +1,13 @@
+{
+  "name": "slot",
+  "version": "1.0.0",
+  "description": "single file upload/download for yxorp users",
+  "main": "server.js",
+  "dependencies": {
+    "ws": "^8.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>slot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="status" id="status">○</div>
+  
+  <div id="emptyState" class="empty-state">
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" style="display: none;">
+      <div>drop file</div>
+    </div>
+  </div>
+  
+  <div id="fileState" class="file-state" style="display: none;">
+    <div class="file-name" id="fileName"></div>
+    <div class="file-meta">
+      <span id="fileSize"></span>
+      <span>•</span>
+      <span id="fileDate"></span>
+    </div>
+    <div class="file-actions">
+      <button id="downloadBtn">download</button>
+      <button id="replaceBtn">replace</button>
+    </div>
+  </div>
+  
+  <script src="/client.js"></script>
+</body>
+</html>
+
