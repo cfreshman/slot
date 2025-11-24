@@ -84,7 +84,14 @@ async function checkAuth() {
         localStorage.setItem('slot_auth', password);
         await checkAuth();
       } else {
-        document.body.innerHTML = '<div style="font-family: monospace; padding: 2rem; text-align: center;">unauthorized</div>';
+        document.body.innerHTML = `
+          <div style="font-family: 'Google Sans Code', monospace; padding: 2rem; text-align: center; max-width: 400px; margin: 0 auto;">
+            <div style="font-size: 0.875rem; margin-bottom: 1rem;">incorrect or missing password</div>
+            <div style="font-size: 0.75rem; color: #999;">
+              <a href="https://github.com/cfreshman/slot" style="color: #000; text-decoration: underline;">github.com/cfreshman/slot</a>
+            </div>
+          </div>
+        `;
       }
     }
   } catch (err) {
