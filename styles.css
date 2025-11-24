@@ -1,3 +1,13 @@
+:root {
+  --bg: #fff;
+  --text: #000;
+  --text-shadow: none;
+  --text-secondary: #999;
+  --border: #ddd;
+  --border-hover: #000;
+  --error-color: #d00;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -10,9 +20,9 @@ html, body {
 }
 
 body {
-  font-family: "Google Sans Code", monospace;
-  background: #fff;
-  color: #000;
+  font-family: "Google Sans Code", "Noto Emoji", monospace;
+  background: var(--bg);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,11 +38,11 @@ body {
 }
 
 .status.connected {
-  color: #000;
+  color: var(--text);
 }
 
 .status.disconnected {
-  color: #d00;
+  color: var(--error-color);
   opacity: 1;
 }
 
@@ -42,22 +52,22 @@ body {
 }
 
 .upload-area {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   padding: 4rem 2rem;
   text-align: center;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .upload-area:hover {
-  border-color: #000;
-  color: #000;
+  border-color: var(--border-hover);
+  color: var(--text);
 }
 
 .upload-area.dragover {
-  border-color: #000;
-  color: #000;
+  border-color: var(--border-hover);
+  color: var(--text);
 }
 
 .file-state {
@@ -74,7 +84,7 @@ body {
 
 .file-meta {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
 }
 
@@ -88,18 +98,17 @@ button {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
   font-family: "Google Sans Code", monospace;
-  background: #fff;
-  color: #000;
-  border: 1px solid #ddd;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
   cursor: pointer;
 }
 
 button:hover {
-  border-color: #000;
+  border-color: var(--border-hover);
 }
 
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
-

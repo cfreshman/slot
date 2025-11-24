@@ -5,9 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const { generateThemeCSS } = require('./themes');
 
 const PORT = process.env.PORT || 8767;
 const DATA_DIR = process.env.DATA_DIR || './data';
+const THEME = process.env.THEME || 'default';
 const SLOT_FILE = path.join(DATA_DIR, 'slot');
 const META_FILE = path.join(DATA_DIR, 'meta.json');
 const PASSWORD_FILE = path.join(DATA_DIR, 'password.txt');
@@ -89,7 +91,11 @@ const server = http.createServer((req, res) => {
   
   // Serve static files
   if (url.pathname === '/' && req.method === 'GET') {
-    serveFile('index.html', 'text/html', res);
+    const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    const themeVars = generateThemeCSS(THEME);
+    const injectedHtml = html.replace('<style id="theme-vars"></style>', `<style id="theme-vars">${themeVars}</style>`);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(injectedHtml);
     return;
   }
   
