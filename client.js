@@ -225,8 +225,29 @@ uploadArea.addEventListener('drop', (e) => {
 });
 
 // Download button
-downloadBtn.addEventListener('click', () => {
-  window.location.href = '/api/download';
+downloadBtn.addEventListener('click', async () => {
+  try {
+    const res = await fetch('/api/download', {
+      headers: getHeaders()
+    });
+    
+    if (!res.ok) {
+      alert('Download failed');
+      return;
+    }
+    
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentMeta.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Download failed');
+  }
 });
 
 // Replace button
