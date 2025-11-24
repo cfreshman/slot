@@ -5,14 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const JsonDB = require('auto-json-db');
 const { generateThemeCSS } = require('./themes');
 
 const PORT = process.env.PORT || 8767;
 const DATA_DIR = process.env.DATA_DIR || './data';
 const THEME = process.env.THEME || 'default';
 const SLOT_FILE = path.join(DATA_DIR, 'slot');
-const META_FILE = path.join(DATA_DIR, 'meta.json');
-const PASSWORD_FILE = path.join(DATA_DIR, 'password.txt');
 const MAX_SIZE = process.env.MAX_SIZE || 1024 * 1024 * 1024; // 1GB default
 
 // Ensure data directory exists
@@ -20,23 +19,15 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Initialize file metadata
-let fileMeta = { name: null, size: 0, uploadedAt: null };
-if (fs.existsSync(META_FILE)) {
-  try {
-    fileMeta = JSON.parse(fs.readFileSync(META_FILE, 'utf8'));
-  } catch (e) {
-    console.error('Error loading metadata:', e.message);
-  }
-}
+// Initialize database
+const db = new JsonDB(path.join(DATA_DIR, 'slot.json'));
 
-let passwordHash = null;
-if (fs.existsSync(PASSWORD_FILE)) {
-  try {
-    passwordHash = fs.readFileSync(PASSWORD_FILE, 'utf8').trim();
-  } catch (e) {
-    console.error('Error loading password file:', e.message);
-  }
+// Initialize db structure if needed
+if (!db.data.passwordHash) {
+  db.data.passwordHash = null;
+}
+if (!db.data.fileMeta) {
+  db.data.fileMeta = { name: null, size: 0, uploadedAt: null };
 }
 
 function hashPassword(password) {
@@ -44,12 +35,8 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password) {
-  if (!passwordHash) return false;
-  return hashPassword(password) === passwordHash;
-}
-
-function saveMeta() {
-  fs.writeFileSync(META_FILE, JSON.stringify(fileMeta, null, 2));
+  if (!db.data.passwordHash) return false;
+  return hashPassword(password) === db.data.passwordHash;
 }
 
 function serveFile(filePath, contentType, res) {
@@ -65,7 +52,7 @@ function serveFile(filePath, contentType, res) {
 }
 
 function checkAuth(req) {
-  if (!passwordHash) return true;
+  if (!db.data.passwordHash) return true;
   
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -113,8 +100,8 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/api/auth' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
-      needsSetup: !passwordHash,
-      requiresAuth: !!passwordHash,
+      needsSetup: !db.data.passwordHash,
+      requiresAuth: !!db.data.passwordHash,
       authenticated: checkAuth(req)
     }));
     return;
@@ -122,7 +109,7 @@ const server = http.createServer((req, res) => {
   
   // API: Setup password
   if (url.pathname === '/api/setup' && req.method === 'POST') {
-    if (passwordHash) {
+    if (db.data.passwordHash) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Password already set' }));
       return;
@@ -140,8 +127,7 @@ const server = http.createServer((req, res) => {
           return;
         }
         
-        passwordHash = hashPassword(password);
-        fs.writeFileSync(PASSWORD_FILE, passwordHash);
+        db.data.passwordHash = hashPassword(password);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
@@ -158,7 +144,7 @@ const server = http.createServer((req, res) => {
     if (!requireAuth(req, res)) return;
     
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(fileMeta));
+    res.end(JSON.stringify(db.data.fileMeta));
     return;
   }
   
@@ -186,18 +172,17 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       writeStream.end();
       
-      fileMeta = {
+      db.data.fileMeta = {
         name: filename,
         size: uploadedSize,
         uploadedAt: new Date().toISOString()
       };
-      saveMeta();
       
       // Broadcast update to all connected clients
       broadcastMeta();
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, meta: fileMeta }));
+      res.end(JSON.stringify({ success: true, meta: db.data.fileMeta }));
     });
     
     req.on('error', (err) => {
@@ -213,7 +198,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/api/download' && req.method === 'GET') {
     if (!requireAuth(req, res)) return;
     
-    if (!fs.existsSync(SLOT_FILE) || !fileMeta.name) {
+    if (!fs.existsSync(SLOT_FILE) || !db.data.fileMeta.name) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'No file uploaded' }));
       return;
@@ -221,8 +206,8 @@ const server = http.createServer((req, res) => {
     
     res.writeHead(200, {
       'Content-Type': 'application/octet-stream',
-      'Content-Disposition': `attachment; filename="${fileMeta.name}"`,
-      'Content-Length': fileMeta.size
+      'Content-Disposition': `attachment; filename="${db.data.fileMeta.name}"`,
+      'Content-Length': db.data.fileMeta.size
     });
     
     const readStream = fs.createReadStream(SLOT_FILE);
@@ -241,7 +226,7 @@ const wss = new WebSocket.Server({ server });
 function broadcastMeta() {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'meta', meta: fileMeta }));
+      client.send(JSON.stringify({ type: 'meta', meta: db.data.fileMeta }));
     }
   });
 }
@@ -250,14 +235,14 @@ wss.on('connection', (ws, req) => {
   console.log('Client connected');
   
   // Send current metadata immediately
-  ws.send(JSON.stringify({ type: 'meta', meta: fileMeta }));
+  ws.send(JSON.stringify({ type: 'meta', meta: db.data.fileMeta }));
   
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
       
       if (data.type === 'auth') {
-        ws.authenticated = !passwordHash || verifyPassword(data.token);
+        ws.authenticated = !db.data.passwordHash || verifyPassword(data.token);
         ws.send(JSON.stringify({ type: 'auth', authenticated: ws.authenticated }));
       }
     } catch (e) {
@@ -274,7 +259,7 @@ server.listen(PORT, () => {
   console.log(`📁 slot running on http://localhost:${PORT}`);
   console.log(`📁 Data stored in ${path.resolve(DATA_DIR)}`);
   console.log(`📏 Max file size: ${(MAX_SIZE / 1024 / 1024).toFixed(0)}MB`);
-  if (passwordHash) {
+  if (db.data.passwordHash) {
     console.log(`🔒 Password required`);
   } else {
     console.log(`⚠️  No password set - first visitor will set password`);
